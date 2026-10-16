@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경제 오락실 시즌 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Nanum+Pen+Script&family=Gothic+A1:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --space:#05060f;
+  --panel:#181405;
+  --gold:#e2bf27;
+  --gold-deep:#a58b1d;
+  --green:#00ff7e;
+  --red:#ff1f1f;
+  --ink:#000;
+  --paper:#fff;
+  --muted:#c9c3a6;
+  --display:"배달의민족 도현","BM DoHyeon","Do Hyeon",sans-serif;
+  --body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--space);
+  color:var(--paper);
+  font-family:var(--body);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+
+/* ---------- stage (16:9, scaled to fit) ---------- */
+#viewport{position:fixed;inset:0 0 64px 0;overflow:hidden}
+#stage{
+  width:1600px;height:900px;position:absolute;left:50%;top:50%;
+  transform-origin:center center;
+  background:
+    radial-gradient(1200px 500px at 85% 110%, rgba(30,90,80,.45), transparent 60%),
+    radial-gradient(900px 500px at 10% -10%, rgba(40,50,140,.35), transparent 60%),
+    var(--space);
+  overflow:hidden;
+}
+#stage::before{ /* gold perspective grid, like the deck */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg, rgba(226,191,39,.13) 0 1px, transparent 1px 200px),
+    repeating-linear-gradient(0deg, rgba(226,191,39,.10) 0 1px, transparent 1px 150px);
+  mask-image:linear-gradient(180deg, rgba(0,0,0,.9), rgba(0,0,0,.35));
+}
+#stage::after{ /* stars */
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.8;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 22%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 33% 64%, #fff, transparent),
+    radial-gradient(1.8px 1.8px at 58% 18%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 74% 72%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 91% 38%, #fff, transparent),
+    radial-gradient(1px 1px at 46% 88%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 6% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 66% 44%, #fff, transparent);
+}
+.slide{position:absolute;inset:0;z-index:1}
+
+/* ---------- header ---------- */
+.head{position:absolute;left:56px;top:34px;display:flex;align-items:center;gap:26px}
+.logo{
+  font-family:var(--display);font-size:62px;line-height:1;letter-spacing:-1px;
+  color:#fff;
+  -webkit-text-stroke:3px #1d2aa8;paint-order:stroke fill;
+  text-shadow:0 5px 0 #1d2aa8, 0 0 0 var(--gold);
+  filter:drop-shadow(0 0 0 #fff);
+}
+.logo b{color:#d8ffb0;font-weight:400}
+.tag{
+  position:relative;
+  background:#fff;color:#000;border:4px solid var(--gold);border-radius:10px;
+  font-family:var(--display);font-size:30px;padding:4px 22px 2px;
+}
+.tag::after{content:"";position:absolute;left:-4px;bottom:-16px;border-left:16px solid var(--gold);border-bottom:16px solid transparent}
+.progress{position:absolute;right:56px;top:52px;font-family:var(--display);font-size:30px;color:var(--gold)}
+
+/* ---------- panels ---------- */
+.panel{
+  position:absolute;background:var(--panel);
+  border:4px solid var(--gold);
+  clip-path:polygon(0 0,calc(100% - 40px) 0,100% 40px,100% 100%,40px 100%,0 calc(100% - 40px));
+}
+.panel.notch{clip-path:polygon(0 0,140px 0,170px 28px,100% 28px,100% 100%,0 100%)}
+/* clip-path hides the border on cut edges; draw it again with an inner outline */
+.panel::before{content:"";position:absolute;inset:0;border:inherit;pointer-events:none}
+
+/* ---------- title & end ---------- */
+.hero{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.hero .sub{font-family:var(--display);font-size:56px;color:#d8ffb0;-webkit-text-stroke:2px #1d2aa8;paint-order:stroke fill;text-shadow:0 4px 0 #1d2aa8}
+.hero h1{
+  font-family:var(--display);font-weight:400;font-size:220px;line-height:1;margin-top:6px;
+  color:#fff7c2;-webkit-text-stroke:8px #1d2aa8;paint-order:stroke fill;
+  text-shadow:0 14px 0 #1d2aa8, 0 14px 0 #1d2aa8;
+  background:linear-gradient(180deg,#fff 30%,#ffe36b 31%,#e2bf27 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero .season{
+  display:inline-block;margin:26px auto 0;
+  font-family:var(--display);font-size:44px;color:#000;background:var(--gold);
+  padding:6px 38px 4px;
+  clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px));
+}
+.hazard{position:absolute;left:40px;right:40px;bottom:40px;height:22px;
+  background:repeating-linear-gradient(115deg,var(--gold) 0 26px,transparent 26px 60px)}
+.startbtn{
+  margin:46px auto 0;font-family:var(--display);font-size:40px;color:var(--green);
+  border:4px solid var(--green);padding:10px 46px 6px;border-radius:999px;
+  animation:pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(0,255,126,.12)}}
+
+/* ---------- round intro ---------- */
+.intro{position:absolute;left:160px;right:160px;top:200px;bottom:120px;padding:56px 70px}
+.intro h2{font-family:var(--display);font-weight:400;font-size:96px;color:var(--gold);line-height:1}
+.intro h2 small{display:block;font-size:40px;color:var(--muted);margin-bottom:12px}
+.intro ul{list-style:none;margin-top:34px;font-size:32px;line-height:1.55;font-weight:700}
+.intro li{padding-left:44px;position:relative}
+.intro li::before{content:"";position:absolute;left:4px;top:.55em;width:18px;height:18px;background:var(--green);transform:rotate(45deg)}
+.star{
+  position:absolute;right:120px;top:120px;width:430px;height:300px;
+  background:#ffff00;color:#000;display:grid;place-content:center;text-align:center;
+  font-family:var(--display);font-size:46px;line-height:1.25;
+  clip-path:polygon(50% 0,63% 22%,100% 25%,78% 50%,100% 75%,63% 78%,50% 100%,37% 78%,0 75%,22% 50%,0 25%,37% 22%);
+  transform:rotate(-8deg);
+}
+
+/* ---------- round 1: four letters ---------- */
+.rule{left:56px;right:56px;top:150px;height:230px;padding:64px 54px 30px}
+.rule .ttl{position:absolute;left:30px;top:2px;font-family:var(--display);font-size:26px;color:#fff}
+.rule p{font-size:30px;font-weight:700;line-height:1.6}
+.rule .hint{color:var(--green)}
+.rule .hint b,.rule .mean b{font-family:var(--display);font-weight:400;color:var(--gold);margin-right:14px}
+.rule .mean{color:#fff}
+.rule .mean em{font-style:normal;color:var(--muted);font-size:24px;display:block;margin-top:6px}
+.letters{position:absolute;left:56px;right:56px;top:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:40px}
+.box{
+  height:350px;background:var(--gold);display:grid;place-items:center;
+  clip-path:polygon(0 0,calc(100% - 46px) 0,100% 46px,100% 100%,46px 100%,0 calc(100% - 46px));
+  font-family:var(--display);font-size:210px;line-height:1;color:var(--ink);
+}
+.box .q{color:rgba(0,0,0,.55);font-size:150px}
+.box .ans{color:var(--red);font-size:230px;-webkit-text-stroke:8px #000;paint-order:stroke fill;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+
+/* ---------- round 2: association ---------- */
+.assoc{position:absolute;inset:0}
+.clue{
+  position:absolute;display:grid;place-items:center;text-align:center;
+  font-family:var(--display);color:#ffe36b;line-height:1.15;white-space:pre-line;padding:10px 26px;
+}
+.clue.tb{width:520px;height:120px;font-size:42px}
+.clue.lr{width:360px;height:250px;font-size:46px}
+.c-top{left:540px;top:130px}
+.c-bot{left:540px;top:660px}
+.c-left{left:60px;top:335px}
+.c-right{left:1180px;top:335px}
+.center{
+  position:absolute;left:480px;top:290px;width:640px;height:340px;background:var(--gold);
+  display:grid;place-items:center;text-align:center;
+  clip-path:polygon(0 0,calc(100% - 50px) 0,100% 50px,100% 100%,50px 100%,0 calc(100% - 50px));
+  font-family:var(--display);color:#000;white-space:pre-line;line-height:1.05;
+}
+.center .q{font-size:170px;color:rgba(0,0,0,.5)}
+.center .ans{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+.wire{position:absolute;inset:0;pointer-events:none}
+.strip{
+  position:absolute;left:60px;right:60px;bottom:-220px;min-height:84px;padding:14px 40px;
+  font-size:26px;font-weight:700;line-height:1.5;transition:bottom .35s ease;z-index:3;
+}
+.strip.show{bottom:18px}
+.strip b{font-family:var(--display);font-weight:400;color:var(--gold);margin-right:14px;font-size:32px}
+.strip.hintstrip{color:var(--green)}
+
+
+.clue .num{position:absolute;left:18px;top:8px;font-size:24px;color:var(--gold-deep)}
+.clue.closed .txt{visibility:hidden}
+.clue.closed::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font-size:84px;color:#4a4220}
+.clue.opened .txt{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+.clue.tb{font-size:50px}
+.clue.lr{font-size:50px}
+.practice{display:inline-block;font-family:"Nanum Pen Script","카페24 아네모네",var(--display);font-size:44px;color:#4f7bff;transform:rotate(-6deg)}
+
+/* ---------- round 3: thinking ---------- */
+.qpanel{left:56px;right:56px;top:150px;height:220px;display:flex;align-items:center;padding:0 60px;gap:30px}
+.qpanel .lab{font-family:var(--display);font-size:72px;color:var(--gold);flex:none}
+.qpanel .qt{font-family:var(--display);font-size:60px;color:var(--green);line-height:1.18;white-space:pre-line}
+.story{left:110px;right:110px;top:400px;height:390px;display:grid;place-items:center;padding:30px 70px}
+.story p{font-size:34px;font-weight:700;line-height:1.7;text-align:center;white-space:pre-line}
+.answer{
+  position:absolute;left:110px;right:110px;top:400px;height:460px;padding:36px 60px;
+  background:#fdf6d3;color:#1a1500;border:6px solid var(--gold);
+  clip-path:polygon(0 0,calc(100% - 40px) 0,100% 40px,100% 100%,40px 100%,0 calc(100% - 40px));
+  font-size:30px;font-weight:700;line-height:1.6;overflow:auto;z-index:3;
+  transform:translateY(560px);transition:transform .45s cubic-bezier(.2,1,.3,1);
+}
+.answer.show{transform:none}
+.answer h3{font-family:var(--display);font-weight:400;font-size:52px;color:#000;margin-bottom:10px}
+.answer .concept{display:inline-block;margin-top:14px;background:#000;color:var(--gold);font-family:var(--display);font-weight:400;font-size:30px;padding:4px 18px 2px}
+.answer p+p{margin-top:8px}
+.hintbubble{
+  position:absolute;left:160px;right:160px;top:806px;text-align:center;z-index:4;
+  background:var(--green);color:#002312;font-size:30px;font-weight:900;line-height:1.4;
+  padding:16px 28px;border-radius:18px;transform:scale(0);transform-origin:center top;transition:transform .3s cubic-bezier(.2,1.5,.4,1);
+}
+.hintbubble.show{transform:scale(1)}
+.hintbubble::before{content:"힌트";font-family:var(--display);font-weight:400;margin-right:12px;background:#002312;color:var(--green);padding:2px 12px 0;border-radius:8px}
+
+/* timer */
+#timer{
+  position:absolute;right:56px;top:28px;width:110px;height:110px;border-radius:50%;z-index:5;
+  display:none;place-items:center;font-family:var(--display);font-size:54px;color:#000;
+  background:conic-gradient(var(--green) var(--p,100%), #2c2a19 0);
+}
+#timer span{width:86px;height:86px;border-radius:50%;background:var(--space);color:var(--green);display:grid;place-items:center}
+#timer.on{display:grid}
+#timer.end{animation:shake .4s linear 3}
+@keyframes shake{25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
+
+/* ---------- final ranking ---------- */
+.rank{position:absolute;left:250px;right:250px;top:300px;display:grid;gap:10px}
+.rank div{display:flex;align-items:center;gap:26px;font-family:var(--display);font-size:40px;padding:4px 30px;background:rgba(24,20,5,.85);border:3px solid var(--gold-deep)}
+.rank div:first-child{border-color:var(--gold);background:var(--gold);color:#000;font-size:50px}
+.rank i{font-style:normal;width:120px;white-space:nowrap;color:inherit;opacity:.8}
+.rank span{flex:1}
+.thanks{position:absolute;left:0;right:0;top:70px;text-align:center;font-family:var(--display);font-size:116px;
+  background:linear-gradient(180deg,#b6ff7a,#fff 55%,#8aa2ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 8px 0 #1d2aa8)}
+.credit{position:absolute;left:0;right:0;top:218px;text-align:center;font-family:var(--display);font-size:32px;color:var(--gold)}
+
+/* ---------- toolbar ---------- */
+#bar{
+  position:fixed;left:0;right:0;bottom:0;height:64px;z-index:20;
+  display:flex;align-items:center;gap:8px;padding:0 12px;
+  background:#0d0c06;border-top:2px solid #3a3313;
+}
+#bar button{
+  height:44px;padding:0 16px;border-radius:8px;background:#221e0c;border:2px solid #3a3313;
+  font-family:var(--display);font-size:22px;color:#f1e7b8;white-space:nowrap;
+}
+#bar button:hover{border-color:var(--gold)}
+#bar button.primary{background:var(--gold);color:#000;border-color:var(--gold)}
+#bar button.hintbtn{background:#003d1f;color:var(--green);border-color:#0a6b3a}
+#bar button[disabled]{opacity:.3;cursor:default}
+#bar .sp{flex:1}
+#bar .where{font-family:var(--display);font-size:20px;color:#8f875f;padding:0 8px;white-space:nowrap}
+#bar .keys{font-size:13px;color:#6f6845;white-space:nowrap}
+
+/* ---------- scoreboard ---------- */
+#score{
+  position:fixed;right:0;top:0;bottom:64px;width:min(380px,100vw);z-index:15;
+  background:#0d0c06f2;border-left:3px solid var(--gold);padding:20px 18px;overflow:auto;
+  transform:translateX(105%);transition:transform .3s ease;
+}
+#score.open{transform:none}
+#score h2{font-family:var(--display);font-weight:400;font-size:34px;color:var(--gold);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+#score h2 button{font-size:18px;color:#8f875f;border:2px solid #3a3313;border-radius:6px;padding:4px 10px}
+.team{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 0;border-bottom:1px solid #2a2510}
+.team input{background:transparent;border:0;border-bottom:2px dashed #3a3313;color:#fff;font-family:var(--display);font-size:26px;width:100%;padding:2px 0}
+.team .pts{font-family:var(--display);font-size:44px;color:var(--green);min-width:70px;text-align:right}
+.team .ops{grid-column:1/-1;display:flex;gap:6px}
+.team .ops button{flex:1;height:38px;border-radius:6px;background:#221e0c;border:2px solid #3a3313;font-family:var(--display);font-size:22px;color:#f1e7b8}
+.team .ops button.plus{color:var(--green)}
+#mini{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:14;display:flex;gap:8px;pointer-events:none}
+#mini div{background:#0d0c06d9;border:2px solid #3a3313;border-radius:8px;padding:2px 10px;font-family:var(--display);font-size:18px;color:#d9cf9c}
+#mini div b{font-weight:400;color:var(--green);margin-left:6px}
+
+@media (max-width:900px){
+  #bar .keys,#bar .where{display:none}
+  #bar{overflow-x:auto}
+  #bar button{padding:0 10px;font-size:18px}
+  #mini{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage" aria-live="polite"></div></div>
+<div id="mini" aria-hidden="true"></div>
+
+<aside id="score" aria-label="점수판">
+  <h2>점수판 <button id="resetScore" type="button">점수 초기화</button></h2>
+  <div id="teams"></div>
+</aside>
+
+<nav id="bar">
+  <button id="prev" type="button" aria-label="이전">◀ 이전</button>
+  <button id="hint" class="hintbtn" type="button">힌트</button>
+  <button id="reveal" class="primary" type="button">정답 공개</button>
+  <button id="extra" type="button">뜻 보기</button>
+  <button id="timerBtn" type="button">60초 타이머</button>
+  <span class="sp"></span>
+  <span class="where" id="where"></span>
+  <span class="keys">→ 다음 · Space 정답 · H 힌트 · T 타이머 · S 점수판 · F 전체화면</span>
+  <button id="scoreBtn" type="button">점수판</button>
+  <button id="fs" type="button">전체화면</button>
+  <button id="next" class="primary" type="button" aria-label="다음">다음 ▶</button>
+</nav>
+
+<script>
+/* =========================================================
+   문항 데이터 — 여기만 고치면 문제를 바꿀 수 있습니다.
+   ========================================================= */
+const R1_PRACTICE = // 네글자 퀴즈 연습문제 (점수 없음)
+  {w:"어린왕자", hint:"비행기 · 장미 · 코끼리 · 구멍난 상자", mean:"생텍쥐페리의 소설 『어린 왕자』. 연습문제라 점수는 없어요. 진행 방식만 익혀 보세요!"};
+
+const R1 = [ // 네글자 퀴즈: 앞 두 글자 제시, 뒤 두 글자 맞히기
+  {w:"신용카드", hint:"물건은 지금, 돈은 다음 달에! 지갑 속 플라스틱 '외상 장부'", mean:"물건을 먼저 사고 돈은 나중에 갚는 카드(일종의 외상). 체크카드는 통장 잔액에서 바로 빠져나간다는 점이 다르다."},
+  {w:"공유경제", hint:"따릉이·카셰어링·숙소 공유 앱처럼, 사지 않고 함께 빌려 쓰는 경제", mean:"물건·공간·서비스를 혼자 소유하지 않고 여럿이 빌려 쓰거나 나눠 쓰는 경제 방식."},
+  {w:"최저임금", hint:"알바할 때 이보다 적게 주면 불법! 해마다 정해지는 시급의 '바닥선'", mean:"근로자가 받아야 할 임금의 가장 낮은 수준을 법으로 정해, 그보다 적게 주지 못하게 한 제도."},
+  {w:"그린워싱", hint:"초록색 포장, '친환경' 문구만 붙여 환경을 생각하는 척하는 광고", mean:"실제로는 친환경적이지 않은데 친환경인 것처럼 꾸며 홍보하는 것(위장 환경주의)."},
+  {w:"가상화폐", hint:"비트코인처럼 실물 없이 인터넷 속에만 존재하는 돈", mean:"지폐·동전 같은 실물 없이 디지털로만 존재하는 화폐. 정부의 공식 용어는 '가상자산'.", alt:"'가상자산'이라고 외쳐도 정답으로 인정"},
+  {w:"국민연금", hint:"젊을 때 월급에서 조금씩 떼어 두었다가, 나이 들면 매달 돌려받는 돈", mean:"일할 때 보험료를 내고, 나이가 들거나 일을 못 하게 되었을 때 연금을 받는 제도."},
+  {w:"버블경제", hint:"1980년대 후반 일본, 집값·주가가 마구 부풀었다가 터지며 긴 불황이 시작됐다", mean:"주식·부동산 같은 자산 가격이 실제 가치보다 지나치게 부풀어 오른 경제 상태. 거품이 꺼지면 가격이 폭락하고 경기가 나빠진다."},
+  {w:"기본소득", hint:"재산이나 일자리와 상관없이, 모든 국민에게 똑같은 돈을 정기적으로 주자는 제도", mean:"재산·소득·일자리 여부와 관계없이 모든 사람에게 조건 없이 일정한 돈을 정기적으로 지급하는 제도."},
+  {w:"보호무역", hint:"외국 물건이 쉽게 들어오지 못하게 막아 우리나라 산업을 지키려는 정책", mean:"관세를 높이거나 수입을 제한해 자기 나라 산업을 보호하는 무역 정책. 반대말은 자유무역."}
+];
+
+const R2 = [ // 연상 퀴즈: 단서 카드는 c[0] → c[3] 순서로 한 장씩 공개 (모호한 것 → 결정적인 것)
+  {a:"세금", c:["의무", "정부", "부가가치세", "국세청"], hint:"2글자 · 초성 ㅅㄱ",
+   exp:"정부가 나라 살림에 쓰기 위해 국민에게 걷는 돈. 세금을 내는 것은 국민의 의무이고, 국세청이 걷는다. 과자 값에 들어 있는 부가가치세처럼 학생도 이미 세금을 내고 있다."},
+  {a:"인플레이션", c:["풍선", "물가", "화폐 가치 하락", "디플레이션의 반대"], hint:"5글자 · 초성 ㅇㅍㄹㅇㅅ",
+   exp:"물가가 전반적으로, 계속 오르는 현상. 같은 돈으로 살 수 있는 물건이 줄어든다(화폐 가치 하락). 영어 inflate(풍선처럼 부풀리다)에서 온 말."},
+  {a:"환율", c:["비율", "달러", "환전", "1달러 = ○○○원"], hint:"2글자 · 초성 ㅎㅇ",
+   exp:"우리나라 돈과 다른 나라 돈을 바꾸는 비율. 1달러를 사는 데 드는 원화가 많아지면 '환율이 올랐다(원화 가치가 떨어졌다)'고 한다."},
+  {a:"금리", c:["은행", "예금 통장", "대출 이자", "돈을 빌리는 값"], hint:"2글자 · 초성 ㄱㄹ",
+   exp:"빌린 돈에 붙는 이자의 비율, 즉 돈을 빌리는 값. 금리가 오르면 예금한 사람은 이자를 더 받고, 대출받은 사람은 이자를 더 낸다."},
+  {a:"관세", c:["국경", "무역", "FTA", "수입품에 붙는 세금"], hint:"2글자 · 초성 ㄱㅅ",
+   exp:"외국에서 들어오는 물건에 매기는 세금. 나라끼리 FTA(자유무역협정)를 맺으면 관세를 낮추거나 없앤다."},
+  {a:"독점", c:["혼자", "부르는 게 값", "불완전경쟁", "경쟁자가 없는 시장"], hint:"2글자 · 초성 ㄷㅈ",
+   exp:"한 기업이 시장을 혼자 차지한 상태. 경쟁자가 없으니 가격을 마음대로 정하기 쉽다. 경쟁이 제대로 이루어지지 않는 '불완전경쟁' 시장의 대표적인 모습."}
+];
+
+const R3 = [ // 사고력 퀴즈
+  {q:"보석상의 총 손해는\n얼마일까?",
+   s:"한 남자가 보석집에 가서 70만 원짜리 반지를 사고 100만 원짜리 수표로 계산했다.\n마침 현찰이 없었던 보석상 주인은 빵집 가게 주인한테\n수표를 현금으로 바꿔 30만 원을 거슬러 주었다.\n근데 빵집 주인이 갑자기 찾아와 수표가 위조 수표라며\n다시 100만 원을 돌려달라고 하여 돌려주었다.\n보석상이 최종적으로 입은 손해는 얼마인가?",
+   hint:"보석상이 '남자에게 넘겨준 것'만 적어 보자!",
+   ans:"100만 원",
+   why:["남자에게 넘어간 것: 반지(70만 원) + 거스름돈(30만 원) = 100만 원","빵집 주인과는 100만 원을 받았다가 100만 원을 돌려줬으니 손익 0원","흔한 오답: 130만 원, 200만 원 → 빵집과 주고받은 돈을 두 번 세서 생기는 실수"],
+   concept:"헷갈리면 들어오고 나간 것만 정리하기"},
+  {q:"24시간 편의점의 출입문에는\n잠금 장치가 왜 있을까?",
+   s:"24시간, 365일 내내 문을 닫지 않는 편의점.\n그런데 출입문을 자세히 보면 열쇠 구멍, 즉 잠금 장치가 달려 있다.\n\n한 번도 잠글 일이 없어 보이는데,\n왜 굳이 잠금 장치가 달려 있을까?",
+   hint:"잠금 장치를 '없애려면' 무엇을 해야 할까?",
+   ans:"잠금 장치를 없애는 데 오히려 돈이 더 들기 때문",
+   why:["출입문은 처음부터 잠금 장치가 달린 표준 제품으로 대량 생산된다. 이미 붙어 있는 것을 떼어 내거나, 잠금 장치 없는 문을 따로 주문 제작하면 돈이 더 든다.","게다가 공사·정전·태풍처럼 갑자기 문을 닫아야 하는 비상 상황에는 잠글 수 있어야 한다.","결국 '그대로 두는 것'이 가장 싸고 합리적인 선택이다."],
+   concept:"합리적 선택 — 바꾸는 데 드는 비용 vs 얻는 이익"},
+  {q:"꼭 필요한 물은 싼데, 없어도 되는\n다이아몬드는 왜 비쌀까?",
+   s:"물이 없으면 사람은 며칠도 버티지 못한다.\n다이아몬드는 없어도 살아가는 데 아무 문제가 없다.\n그런데 생수 한 병은 천 원 남짓이고,\n작은 다이아몬드 반지는 수백만 원이나 한다.",
+   hint:"세상에 물은 얼마나 많고, 다이아몬드는 얼마나 적을까?",
+   ans:"가격은 '얼마나 필요한가'보다 '원하는 사람에 비해 얼마나 부족한가'로 정해진다",
+   why:["물은 양이 많아 쉽게 구하지만, 다이아몬드는 원하는 사람에 비해 아주 적다.","보너스 질문: 사막에서 길을 잃었다면 물 한 병과 다이아몬드 중 무엇을 고를까?"],
+   concept:"희소성 — 원하는 것에 비해 자원이 부족한 상태"},
+  {q:"엘렌의 공원 불꽃놀이 사업은\n왜 망했을까?",
+   s:"불꽃 마을 사람들은 불꽃놀이를 좋아한다.\n사업가 엘렌은 공원에서 불꽃놀이 사업을 실시하여 큰 돈을 벌고자 한다.\n불꽃 마을 사람들에게 입장료 10,000원을 받고 불꽃놀이를 선보이는 이 사업은\n엘렌의 예상과 달리 망했다. 왜 망했을까?",
+   hint:"불꽃은 어디에서 터질까? 입장료를 안 내도 볼 수 있을까?",
+   ans:"돈을 안 내도 공원 밖에서 다 볼 수 있으니까",
+   why:["불꽃은 하늘 높이 터지기 때문에 입장료를 내지 않은 사람도 공원 밖에서 똑같이 볼 수 있다.","돈 안 낸 사람을 막을 방법이 없고, 내가 본다고 다른 사람이 못 보는 것도 아니다.","그러니 모두가 '공짜로 보자'고 생각해 아무도 입장료를 내지 않는다."],
+   concept:"무임승차 — 돈을 안 내고 혜택만 누리기"},
+  {q:"코끼리는 멸종 위기에 처하지만,\n소는 왜 멸종되지 않을까?",
+   s:"일부 아프리카 국가에서는 상아를 노리는 밀렵꾼들 때문에\n코끼리들이 멸종 위기에 처해 있다.\n상아의 시장 가치는 코끼리의 생존에 위협이 되지만,\n쇠고기의 시장 가치는 소의 생존에 도움이 된다.\n쇠고기의 수요가 늘수록 소는 멸종의 위협으로부터 더 멀어진다.\n왜 그럴까?",
+   hint:"코끼리의 주인은 누구일까? 소의 주인은?",
+   ans:"코끼리는 주인이 없고, 소는 주인이 있기 때문",
+   why:["코끼리는 주인 없이 초원을 자유로이 돌아다니기에 밀렵꾼은 가능한 한 많은 코끼리를 남보다 먼저 잡아야 하는 유인이 있다. 왜냐하면 밀렵꾼의 수는 많고, 각각의 밀렵꾼은 코끼리의 개체수를 유지하기 위해 밀렵을 자제할 유인이 없기 때문이다.","반면 소는 개인이 소유한 목장에서 사육되는 사유재산이다. 목장 주인은 소의 숫자를 유지하는 것이 자신에게 이득이 되기 때문에 소를 잘 관리한다."],
+   concept:"코끼리는 공유자원, 소는 사유재산"},
+  {q:"정부에서는 왜 코로나 백신 접종을\n무료로 지원하는 걸까?",
+   s:"코로나19가 유행하자 정부는 국민들에게 백신 접종을 무료로 지원했다.\n백신을 사 오고, 옮기고, 주사하는 데에는 큰돈이 든다.\n\n그런데도 정부가 세금을 써 가며\n공짜로 맞게 해 준 이유는 무엇일까?",
+   hint:"내가 백신을 맞으면, 좋아지는 사람은 나 혼자뿐일까?",
+   ans:"백신은 맞은 사람뿐 아니라 주변 사람까지 지켜 주기 때문",
+   why:["내가 백신을 맞으면 나뿐 아니라 가족·친구·이웃이 감염될 위험도 줄어든다.","그런데 사람들은 보통 '내 이익'만 생각해서, 돈을 내야 한다면 접종을 미루거나 안 맞을 수 있다.","그래서 정부가 비용을 대신 내 접종하는 사람을 늘리면 사회 전체가 더 안전해진다."],
+   concept:"나만 좋은 게 아니라 남에게도 좋은 일"},
+  {q:"금리가 오르면\n부동산 가격은 어떻게 될까?",
+   s:"민수네는 은행에서 3억 원을 빌려 집을 사려고 한다.\n그런데 대출 금리가 1년에 3%에서 6%로 올랐다.\n\n민수네 같은 사람들은 어떤 선택을 할까?\n그러면 집값은 어떻게 될까?",
+   hint:"3억 원을 빌렸을 때 1년 이자를 3%와 6%로 각각 계산해 보자!",
+   ans:"집을 사려는 사람이 줄어 집값이 내려가는 경향이 있다",
+   why:["1년 이자: 3%면 900만 원, 6%면 1,800만 원 → 이자 부담이 두 배가 된다.","대출받아 집을 사려던 사람들이 구입을 미루거나 포기한다 → 집을 사려는 사람(수요)이 줄어든다 → 집값이 내려가는 압력을 받는다.","예금 이자도 오르니 돈을 집 대신 은행에 넣어 두려는 사람도 늘어난다.","주의: 집값은 공급량·정부 정책 등의 영향도 받기 때문에 항상 그렇게 되는 것은 아니다."],
+   concept:"금리↑ → 이자 부담↑ → 수요↓ → 가격↓"},
+  {q:"원화 가치가 떨어지면\n수출 기업은 어떻게 될까?",
+   s:"환율이 1달러=1,000원에서 1달러=1,500원이 되었다. (원화 가치 하락)\n우리나라 자동차 회사는 미국에서 차 한 대를 2만 달러에 판다.\n\n이 회사에게 좋은 일일까, 나쁜 일일까?\n그리고 이번 겨울 미국 여행을 계획한 우리 가족에게는?",
+   hint:"2만 달러를 우리 돈으로 바꾸면 전에는 얼마, 지금은 얼마일까?",
+   ans:"수출 기업은 유리, 해외여행 가족은 불리",
+   why:["수출 기업: 같은 2만 달러를 벌어도 원화로 2,000만 원 → 3,000만 원. 값을 조금 내려도 손해가 없어 미국 시장에서 경쟁하기도 쉬워진다.","여행 가족: 1,000달러를 환전하는 데 100만 원 → 150만 원이 든다.","더 생각해 보기: 석유 같은 수입 원료와 수입품 값이 올라 우리나라 물가가 오를 수 있다."],
+   concept:"환율 — 원화 가치가 떨어지면 수출↑ 수입·해외여행 부담↑"},
+  {q:"코브라를 없애려고 포상금을 줬는데,\n왜 코브라가 더 늘었을까?",
+   s:"옛날 인도의 한 도시에 독사 코브라가 너무 많았다.\n정부는 \"코브라를 잡아 오면 한 마리당 포상금을 주겠다!\"고 발표했다.\n처음엔 코브라가 줄어드는 듯했지만, 얼마 뒤 정부는 정책을 없앴고\n결국 도시의 코브라는 오히려 더 늘어났다.",
+   hint:"포상금을 가장 '쉽게' 받는 방법을 떠올려 보자!",
+   ans:"사람들이 포상금을 받으려고 코브라를 몰래 길렀다",
+   why:["정부가 눈치채고 포상금을 없애자, 쓸모없어진 코브라를 풀어 버렸다.","좋은 뜻의 정책도 사람들이 어떻게 반응할지 생각하지 않으면 정반대 결과가 나온다.","참고: 널리 알려진 일화지만 역사 기록으로 확인된 사실은 아니다."],
+   concept:"사람들은 보상(인센티브)에 반응한다"}
+];
+
+const CREDIT = "은행고등학교 통합사회 선생님^^";
+const TEAM_COUNT = 6;
+
+/* ========================================================= */
+const stage = document.getElementById("stage");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const slides = [{type:"title"}];
+const rounds = [
+  {n:1, name:"네글자 퀴즈", items:R1, type:"r1", pts:"1문제 당 1점",
+   rules:["앞의 두 글자를 보고 네 글자 경제 용어를 완성하세요.","정답을 알면 손을 들면서 모둠 구호를 외치세요.","단어를 맞히면 1점, 이어서 뜻까지 말하면 1점 더!","뜻을 틀리면 다른 모둠이 뜻을 말해 1점을 가져갈 수 있어요."]},
+  {n:2, name:"연상 퀴즈", items:R2, type:"r2", pts:"1문제 당 2점",
+   rules:["단서 카드가 한 장씩 차례로 열립니다. 처음 카드일수록 어려워요!","가운데 들어갈 경제 단어를 알면 손을 들면서 모둠 구호를 외치세요.","카드가 적게 열렸을 때 맞힐수록 유리! 틀리면 다음 카드가 열립니다."]},
+  {n:3, name:"사고력 퀴즈", items:R3, type:"r3", pts:"1문제 당 2점",
+   rules:["상황을 읽고 모둠별로 30초~1분 동안 상의하세요.","구호를 외친 모둠이 이유를 들어 논리적으로 답하면 2점!","답이 부족하면 다른 모둠이 보충해서 점수를 가져갈 수 있어요."]}
+];
+rounds.forEach(r => {
+  slides.push({type:"intro", round:r});
+  if(r.n === 1) slides.push({type:"r1", round:r, item:R1_PRACTICE, practice:true});
+  r.items.forEach((it, i) => slides.push({type:r.type, round:r, item:it, idx:i}));
+});
+slides.push({type:"end"});
+
+let cur = 0, state = {};
+
+/* ---------- storage (optional, per browser) ---------- */
+const KEY = "econ-arcade-s2";
+function loadTeams(){
+  try{ const t = JSON.parse(localStorage.getItem(KEY)); if(Array.isArray(t) && t.length) return t; }catch(e){}
+  return Array.from({length:TEAM_COUNT}, (_, i) => ({name:`${i+1}모둠`, pts:0}));
+}
+let teams = loadTeams();
+function saveTeams(){ try{ localStorage.setItem(KEY, JSON.stringify(teams)); }catch(e){} }
+
+/* ---------- render ---------- */
+function header(tag){
+  const s = slides[cur];
+  const prog = s.practice ? `<span class="practice">연습문제</span>` : (s.round && s.idx !== undefined ? `${s.idx+1} / ${s.round.items.length}` : "");
+  return `<div class="head"><div class="logo">경제 <b>오락실</b></div><div class="tag">${tag}</div></div><div class="progress">${prog}</div>`;
+}
+
+function render(){
+  const s = slides[cur];
+  state = {revealed:false, hint:false, extra:false, step:1};
+  stopTimer();
+  let h = "";
+  if(s.type === "title"){
+    h = `<div class="hero">
+      <div class="sub">너무너무 재밌고 유익한^^</div>
+      <h1>경제 오락실</h1>
+      <div><span class="season">시즌 2 · 시사 경제 특집</span></div>
+      <button class="startbtn" type="button" onclick="go(1)">게임 시작</button>
+    </div><div class="hazard"></div>`;
+  }
+  else if(s.type === "intro"){
+    const r = s.round;
+    h = `${header(r.name + "!")}
+    <div class="panel intro"><h2><small>ROUND ${r.n}</small>${r.name}</h2>
+      <ul>${r.rules.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="star">총 ${r.items.length}문제<br>${r.pts}</div>`;
+  }
+  else if(s.type === "r1"){
+    const w = s.item.w;
+    h = `${header("네글자 퀴즈!")}
+    <div class="panel notch rule"><span class="ttl">규칙 안내</span><div id="ruleBody"></div></div>
+    <div class="letters">
+      <div class="box">${w[0]}</div><div class="box">${w[1]}</div>
+      <div class="box" id="b2"><span class="q">?</span></div><div class="box" id="b3"><span class="q">?</span></div>
+    </div>`;
+  }
+  else if(s.type === "r2"){
+    const it = s.item;
+    const L = Math.max(...it.a.split("\n").map(x => x.length));
+    h = `${header("연상 퀴즈!")}
+    <svg class="wire" viewBox="0 0 1600 900" aria-hidden="true">
+      <g fill="none" stroke="#e2bf27" stroke-width="4">
+        <polyline points="540,190 460,190 460,300"/><polyline points="1060,190 1140,190 1140,300"/>
+        <polyline points="540,720 460,720 460,620"/><polyline points="1060,720 1140,720 1140,620"/>
+      </g></svg>
+    ${["tb c-top","lr c-right","tb c-bot","lr c-left"].map((pos, k) =>
+      `<div class="panel clue ${pos}${k ? " closed" : ""}" id="clue${k}" style="font-size:${it.c[k].length <= 6 ? 54 : it.c[k].length <= 9 ? 44 : 38}px"><span class="num">${k+1}</span><span class="txt">${esc(it.c[k])}</span></div>`).join("")}
+    <div class="center" id="center" data-l="${L}"><span class="q">?</span></div>
+    <div class="panel strip hintstrip" id="hintStrip"><b>힌트</b>${esc(it.hint)}</div>
+    <div class="panel strip" id="expStrip"><b>해설</b>${esc(it.exp)}</div>`;
+  }
+  else if(s.type === "r3"){
+    const it = s.item;
+    h = `${header("사고력 퀴즈!")}
+    <div class="panel qpanel"><span class="lab">질문 :</span><span class="qt">${esc(it.q)}</span></div>
+    <div class="panel story"><p>${esc(it.s)}</p></div>
+    <div class="hintbubble" id="hintBubble">${esc(it.hint)}</div>
+    <div class="answer" id="answer"><h3>${esc(it.ans)}</h3>${it.why.map(x => `<p>${esc(x)}</p>`).join("")}<span class="concept">${esc(it.concept)}</span></div>`;
+  }
+  else if(s.type === "end"){
+    const sorted = teams.map(t => ({...t})).sort((a, b) => b.pts - a.pts);
+    h = `<div class="thanks">THANK YOU</div>
+      <div class="rank">${sorted.slice(0, 6).map((t, i) => `<div><i>${i+1}위</i><span>${esc(t.name)}</span><b>${t.pts}점</b></div>`).join("")}</div>
+      <div class="credit">${esc(CREDIT)}</div><div class="hazard"></div>`;
+  }
+  stage.innerHTML = `<div class="slide">${h}<div id="timer"><span></span></div></div>`;
+  if(s.type === "r1") setRule("rules");
+  updateBar();
+}
+
+function setRule(mode){
+  const el = document.getElementById("ruleBody"); if(!el) return;
+  const it = slides[cur].item;
+  if(mode === "rules") el.innerHTML = `<p>① 화면에 네 글자(경제 단어) 중 두 글자를 제시합니다.</p><p>② 단어를 아는 모둠은 모둠의 구호를 크게 외치며 손을 들고 지명을 기다린다.</p>`;
+  if(mode === "hint") el.innerHTML = `<p class="hint"><b>힌트</b>${esc(it.hint)}</p>`;
+  if(mode === "mean") el.innerHTML = `<p class="mean"><b>뜻</b>${esc(it.mean)}${it.alt ? `<em>※ ${esc(it.alt)}</em>` : ""}</p>`;
+}
+
+/* ---------- actions ---------- */
+function reveal(){
+  const s = slides[cur];
+  if(state.revealed) return false;
+  if(s.type === "r1"){
+    const w = s.item.w;
+    document.getElementById("b2").innerHTML = `<span class="ans">${w[2]}</span>`;
+    setTimeout(() => { const b3 = document.getElementById("b3"); if(b3 && slides[cur].item === s.item) b3.innerHTML = `<span class="ans">${w[3]}</span>`; }, 180);
+  } else if(s.type === "r2"){
+    while(state.step < 4) openClue();
+    const c = document.getElementById("center");
+    const L = +c.dataset.l, lines = s.item.a.split("\n").length;
+    const size = lines > 1 ? 110 : (L <= 2 ? 190 : L <= 3 ? 160 : L <= 4 ? 130 : 100);
+    c.innerHTML = `<span class="ans" style="font-size:${size}px">${esc(s.item.a)}</span>`;
+  } else if(s.type === "r3"){
+    document.getElementById("hintBubble").classList.remove("show");
+    document.getElementById("answer").classList.add("show");
+  } else return false;
+  state.revealed = true; stopTimer(); updateBar(); return true;
+}
+function hint(){
+  const s = slides[cur];
+  state.hint = !state.hint;
+  if(s.type === "r1") setRule(state.hint ? "hint" : (state.extra ? "mean" : "rules"));
+  if(s.type === "r2"){ document.getElementById("expStrip").classList.remove("show"); state.extra = false;
+    document.getElementById("hintStrip").classList.toggle("show", state.hint); }
+  if(s.type === "r3") document.getElementById("hintBubble").classList.toggle("show", state.hint && !state.revealed);
+  updateBar();
+}
+function extra(){
+  const s = slides[cur];
+  if(!state.revealed) reveal();
+  state.extra = !state.extra;
+  if(s.type === "r1"){ state.hint = false; setRule(state.extra ? "mean" : "rules"); }
+  if(s.type === "r2"){ state.hint = false; document.getElementById("hintStrip").classList.remove("show");
+    document.getElementById("expStrip").classList.toggle("show", state.extra); }
+  updateBar();
+}
+function openClue(){
+  const el = document.getElementById("clue" + state.step); if(!el) return;
+  el.classList.remove("closed"); el.classList.add("opened"); state.step++; updateBar();
+}
+function go(i){ cur = Math.max(0, Math.min(slides.length - 1, i)); render(); }
+function next(){ // clicker-friendly: reveal first, then advance
+  const t = slides[cur].type;
+  if(t === "r2" && !state.revealed && state.step < 4){ openClue(); return; }
+  if(["r1","r2","r3"].includes(t) && !state.revealed){ reveal(); return; }
+  go(cur + 1);
+}
+
+/* ---------- timer ---------- */
+let tId = null, tLeft = 0;
+const TOTAL = 60;
+function startTimer(){
+  stopTimer(); tLeft = TOTAL;
+  const el = document.getElementById("timer"); el.classList.add("on"); el.classList.remove("end");
+  tick();
+  tId = setInterval(() => { tLeft--; tick(); if(tLeft <= 0){ clearInterval(tId); tId = null; el.classList.add("end"); beep(); updateBar(); } }, 1000);
+  updateBar();
+}
+function tick(){
+  const el = document.getElementById("timer"); if(!el) return;
+  el.style.setProperty("--p", (tLeft / TOTAL * 100) + "%");
+  el.querySelector("span").textContent = tLeft;
+}
+function stopTimer(){ if(tId){ clearInterval(tId); tId = null; } const el = document.getElementById("timer"); if(el) el.classList.remove("on","end"); }
+function beep(){
+  try{
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .25, .5].forEach(d => { const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(.2, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + d + .2);
+      o.start(ac.currentTime + d); o.stop(ac.currentTime + d + .22); });
+  }catch(e){}
+}
+
+/* ---------- toolbar state ---------- */
+function updateBar(){
+  const s = slides[cur], q = ["r1","r2","r3"].includes(s.type);
+  const $ = id => document.getElementById(id);
+  $("prev").disabled = cur === 0;
+  $("next").disabled = cur === slides.length - 1;
+  $("hint").disabled = !q || (s.type === "r3" && state.revealed);
+  $("hint").textContent = state.hint ? "힌트 닫기" : "힌트";
+  $("reveal").disabled = !q || state.revealed;
+  $("extra").style.display = (s.type === "r1" || s.type === "r2") ? "" : "none";
+  $("extra").textContent = s.type === "r1" ? (state.extra ? "뜻 닫기" : "뜻 보기") : (state.extra ? "해설 닫기" : "해설 보기");
+  $("timerBtn").textContent = tId ? "타이머 정지" : "60초 타이머";
+  $("timerBtn").disabled = !q;
+  $("next").textContent = (s.type === "r2" && !state.revealed && state.step < 4) ? `단서 ${state.step + 1}/4 ▶` : "다음 ▶";
+  $("where").textContent = s.round ? `${s.round.n}라운드 ${s.round.name}` : "";
+}
+
+/* ---------- scoreboard ---------- */
+function renderTeams(){
+  document.getElementById("teams").innerHTML = teams.map((t, i) => `
+    <div class="team">
+      <input value="${esc(t.name)}" data-i="${i}" aria-label="${i+1}번째 모둠 이름">
+      <div class="pts">${t.pts}</div>
+      <div class="ops"><button type="button" data-i="${i}" data-d="-1">−1</button>
+        <button type="button" class="plus" data-i="${i}" data-d="1">+1</button>
+        <button type="button" class="plus" data-i="${i}" data-d="2">+2</button></div>
+    </div>`).join("");
+  document.getElementById("mini").innerHTML = teams.map(t => `<div>${esc(t.name)}<b>${t.pts}</b></div>`).join("");
+}
+document.getElementById("teams").addEventListener("click", e => {
+  const b = e.target.closest("button[data-d]"); if(!b) return;
+  const t = teams[+b.dataset.i]; t.pts = Math.max(0, t.pts + +b.dataset.d);
+  saveTeams(); renderTeams(); if(slides[cur].type === "end") render();
+});
+document.getElementById("teams").addEventListener("input", e => {
+  if(e.target.matches("input")){ teams[+e.target.dataset.i].name = e.target.value; saveTeams();
+    document.getElementById("mini").innerHTML = teams.map(t => `<div>${esc(t.name)}<b>${t.pts}</b></div>`).join(""); }
+});
+document.getElementById("resetScore").onclick = () => {
+  if(confirm("모든 모둠의 점수를 0점으로 되돌릴까요?")){ teams.forEach(t => t.pts = 0); saveTeams(); renderTeams(); if(slides[cur].type === "end") render(); }
+};
+const toggleScore = () => document.getElementById("score").classList.toggle("open");
+
+/* ---------- wiring ---------- */
+const fsToggle = () => { try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} };
+document.getElementById("prev").onclick = () => go(cur - 1);
+document.getElementById("next").onclick = next;
+document.getElementById("hint").onclick = hint;
+document.getElementById("reveal").onclick = reveal;
+document.getElementById("extra").onclick = extra;
+document.getElementById("timerBtn").onclick = () => tId ? (stopTimer(), updateBar()) : startTimer();
+document.getElementById("scoreBtn").onclick = toggleScore;
+document.getElementById("fs").onclick = fsToggle;
+document.addEventListener("keydown", e => {
+  if(e.target.matches("input")) return;
+  const k = e.key;
+  if(k === "ArrowRight" || k === "PageDown"){ e.preventDefault(); next(); }
+  else if(k === "ArrowLeft" || k === "PageUp"){ e.preventDefault(); go(cur - 1); }
+  else if(k === " " || k === "Enter"){ if(e.target.closest("button")) return; e.preventDefault(); reveal(); }
+  else if(k === "h" || k === "H" || k === "ㅗ") hint();
+  else if(k === "t" || k === "T" || k === "ㅅ") tId ? (stopTimer(), updateBar()) : startTimer();
+  else if(k === "s" || k === "S" || k === "ㄴ") toggleScore();
+  else if(k === "f" || k === "F" || k === "ㄹ") fsToggle();
+  else if(k === "Home") go(0);
+});
+
+function fit(){
+  const vw = window.innerWidth, vh = window.innerHeight - 64;
+  const sc = Math.min(vw / 1600, vh / 900);
+  stage.style.transform = `translate(-50%,-50%) scale(${sc})`;
+}
+window.addEventListener("resize", fit);
+fit(); renderTeams(); render();
+</script>
+</body>
+</html>
